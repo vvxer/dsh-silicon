@@ -74,6 +74,14 @@ dsh plugin --profile web add -w github:vvxer/dsh-silicon
 - 同时开着多个"硅基保留"会话聊天，原文日志里两边的话会按时间交错在一起。
 - 硅基保留的本地人格权重（LoRA 融合，需要显卡）还没有接进 DSH。目前 DSH 版是"纯 DeepSeek + 记忆"，也就是硅基保留现在推荐的默认用法。
 
+## 作者与反馈
+
+作者：抖音 @骑老爷爷过马路被罚300
+
+用的时候遇到问题，欢迎反馈：
+- 报错、装不上、效果不对：请在 GitHub 提 [Issue](https://github.com/vvxer/dsh-silicon/issues)，附上报错信息、系统和 DSH 版本。别人遇到同样的问题也能搜到。
+- 用下来的感受、想法：欢迎在抖音私信或评论区找作者。
+
 ## 开发
 
 ```bash
