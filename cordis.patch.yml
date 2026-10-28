@@ -1,0 +1,11 @@
+# dsh-silicon 的组合补丁：装上插件后，在 DSH 的模型选择里选"硅基保留"开头的模型即可。
+# 这里的 config 会整体替换插件配置，要改哪项就把需要的项都写上。
+- insert:
+    - id: silicon
+      name: dsh-silicon
+      config:
+        # 你和她的称呼，会写进记忆的整理提示里
+        userName: 用户
+        aiName: 她
+        # 记忆转交给哪个 DeepSeek 路由：API key 用 deepseek-official，账号登录用 deepseek-account
+        upstream: deepseek-official
