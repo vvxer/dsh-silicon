@@ -2,7 +2,7 @@
   "name": "dsh-silicon",
   "version": "0.1.0",
   "description": "硅基保留：DeepSeek Harness 的长期记忆插件。原文永久保存、分层概况、相处习惯卡，聊多久都不需要压缩记忆。",
-  "license": "MIT",
+  "license": "PolyForm-Noncommercial-1.0.0",
   "type": "module",
   "main": "index.js",
   "types": "lib/index.d.ts",
