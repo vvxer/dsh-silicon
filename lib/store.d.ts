@@ -35,8 +35,8 @@ export declare class Store {
     chunks: Chunk[];
     private vecs;
     private unsaved;
-    /** 已记入日志的 DSH 消息 id，防止同一条消息记两遍。 */
-    readonly seen: Set<string>;
+    /** 已记入日志的 DSH 消息 id → 记录时间（毫秒）：防止同一条消息记两遍，本地权重也用它给用户的话加时间。 */
+    readonly seen: Map<string, number>;
     constructor(dir: string, userName: string, aiName: string);
     append(role: LogRecord["role"], content: string, t?: Date, id?: string): void;
     days(): Day[];

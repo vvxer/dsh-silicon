@@ -2,6 +2,7 @@
  * dsh-silicon：硅基保留的 DeepSeek Harness 插件。
  *   注册"硅基保留"模型提供方（adapter.ts）：在 DSH 里选它的模型，就会带上长期记忆，并把对话记进原文日志。
  *   每天 nightlyAt 整理一次记忆（nightly.ts）；DSH 启动后也会把没整理的日子补上。整理用的 DeepSeek 调用走 upstream 路由。
+ *   可选的本地人格权重（lora.ts）：默认关；useLora 打开后，闲聊交给本机的硅基保留本地权重服务融合。
  * 数据都在 dataDir（默认 ~/.silicon），格式与硅基保留 Python 版相同。
  */
 
@@ -12,6 +13,7 @@ import type { Context } from "@deepseek-ai/cordis";
 import type { ReasoningEffortId } from "@deepseek-ai/dsh-llm";
 import { PROVIDER, SiliconAdapter } from "./adapter.js";
 import { Embedder } from "./embed.js";
+import { Lora } from "./lora.js";
 import { Memory } from "./memory.js";
 import { runNightly, type Ask } from "./nightly.js";
 import { Store } from "./store.js";
@@ -32,6 +34,9 @@ export interface Config {
   embedDtype?: string;
   modelHost?: string;
   modelDir?: string;
+  useLora?: boolean;
+  loraServer?: string;
+  loraSpeed?: string;
 }
 
 export const Config: Schema<Config> = Schema.object({
@@ -47,6 +52,10 @@ export const Config: Schema<Config> = Schema.object({
     .description("句向量模型精度：fp16（约 200MB，检索结果与评测时 50 条里 49 条相同）、fp32（约 390MB，完全相同）；q8 只有约 2/3 相同，不建议"),
   modelHost: Schema.string().default("https://hf-mirror.com/").description("句向量模型下载源"),
   modelDir: Schema.string().description("已下载好的模型根目录（给了就不联网下载）"),
+  useLora: Schema.boolean().default(false)
+    .description("开本地人格权重（要 8GB 显卡）：闲聊交给本机的硅基保留本地权重服务融合，先按 README 烘焙并启动服务；默认关，只用 DeepSeek + 记忆"),
+  loraServer: Schema.string().default("http://127.0.0.1:8701").description("本地权重服务地址（python -m silicon.lora_server）"),
+  loraSpeed: Schema.string().default("").description("融合速度档 fast / medium / strong：越往后越像她、越慢；留空用服务的设置"),
 });
 
 const log = (msg: string) => console.error(`[silicon] ${msg}`);
@@ -71,7 +80,8 @@ export function apply(ctx: Context, config: Config = {}): void {
     ...(config.modelDir ? { localDir: config.modelDir } : {}),
   });
   const memory = new Memory(store, embed, { retrievalChars: config.retrievalChars ?? 3000 });
-  ctx.llm.registerAdapter([PROVIDER], new SiliconAdapter(ctx, memory, upstream));
+  const lora = config.useLora ? new Lora(config.loraServer || "http://127.0.0.1:8701", config.loraSpeed ?? "", log) : undefined;
+  ctx.llm.registerAdapter([PROVIDER], new SiliconAdapter(ctx, memory, upstream, lora));
 
   const ask: Ask = async (prompt, maxTokens = 300) => {
     let text = "";
@@ -117,5 +127,6 @@ export function apply(ctx: Context, config: Config = {}): void {
     timers.forEach(clearTimeout);
     store.close();
   });
-  log(`已就绪：记忆在 ${dir}，${store.days().length} 天的原文；在模型选择里选"硅基保留"开头的模型即可`);
+  log(`已就绪：记忆在 ${dir}，${store.days().length} 天的原文；在模型选择里选"硅基保留"开头的模型即可` +
+    (lora ? `；本地权重：${lora.server}` : ""));
 }

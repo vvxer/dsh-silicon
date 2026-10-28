@@ -19,6 +19,11 @@ export function hhmm(t: Date): string {
   return `${pad(t.getHours())}:${pad(t.getMinutes())}`;
 }
 
+/** 用户消息前的时间戳 "[星期二 21:05]"（与 Python 版 memory.stamp 相同）。 */
+export function stamp(t: Date): string {
+  return `[星期${WEEK[(t.getDay() + 6) % 7]} ${hhmm(t)}]`;
+}
+
 function toUtc(d: Day): number {
   const [y, m, dd] = d.split("-").map(Number) as [number, number, number];
   return Date.UTC(y, m - 1, dd);

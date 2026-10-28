@@ -7,6 +7,8 @@ export declare const WEEK = "\u4E00\u4E8C\u4E09\u56DB\u4E94\u516D\u65E5";
 /** 本地时间的日期。 */
 export declare function dayOf(t: Date): Day;
 export declare function hhmm(t: Date): string;
+/** 用户消息前的时间戳 "[星期二 21:05]"（与 Python 版 memory.stamp 相同）。 */
+export declare function stamp(t: Date): string;
 export declare function addDays(d: Day, n: number): Day;
 /** 星期一 = 0 … 星期日 = 6。 */
 export declare function weekday(d: Day): number;

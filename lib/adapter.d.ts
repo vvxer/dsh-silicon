@@ -2,16 +2,19 @@
  * "硅基保留"模型提供方：把请求加上记忆后，转交给 DSH 里已经配好的 DeepSeek 路由（upstream）。
  * 鉴权、思考模式、工具调用、重试都沿用上游；会话标题、压缩摘要这类辅助调用原样转交，不加记忆、不记日志。
  * 只有选了本提供方的会话才会被记进原文日志，用 DSH 干别的活不会被记。
+ * 开了本地权重（lora）时，闲聊改由本地权重服务融合（见 lora.ts），服务用不了就照常转交上游。
  */
 import type { Context } from "@deepseek-ai/cordis";
 import { LlmAdapter, type GenerateOptions, type LlmModelInfo, type LlmProviderInfo, type LlmResolvedModelInfo, type StreamChunk } from "@deepseek-ai/dsh-llm";
+import { type Lora } from "./lora.js";
 import type { Memory } from "./memory.js";
 export declare const PROVIDER = "silicon";
 export declare class SiliconAdapter extends LlmAdapter {
     private readonly ctx;
     private readonly memory;
     private readonly upstream;
-    constructor(ctx: Context, memory: Memory, upstream: string);
+    private readonly lora?;
+    constructor(ctx: Context, memory: Memory, upstream: string, lora?: Lora | undefined);
     providerInfo(provider: string): LlmProviderInfo;
     listModels(provider: string): Promise<readonly LlmModelInfo[]>;
     resolveModel(provider: string, model: string, signal?: AbortSignal): Promise<LlmResolvedModelInfo>;

@@ -43,8 +43,8 @@ export class Store {
   chunks: Chunk[] = [];
   private vecs = new Map<string, { hash: string; v: Float32Array }>();
   private unsaved: Chunk[] = [];
-  /** 已记入日志的 DSH 消息 id，防止同一条消息记两遍。 */
-  readonly seen = new Set<string>();
+  /** 已记入日志的 DSH 消息 id → 记录时间（毫秒）：防止同一条消息记两遍，本地权重也用它给用户的话加时间。 */
+  readonly seen = new Map<string, number>();
 
   constructor(readonly dir: string, readonly userName: string, readonly aiName: string) {
     this.logs = join(dir, "logs");
@@ -74,14 +74,15 @@ export class Store {
   }
 
   private add(day: Day, rec: LogRecord): void {
-    if (rec.id) this.seen.add(rec.id);
+    const [h, mi] = rec.time.split(":").map(Number) as [number, number];
+    const [y, mo, d] = day.split("-").map(Number) as [number, number, number];
+    const at = new Date(y, mo - 1, d, h, mi).getTime();
+    if (rec.id) this.seen.set(rec.id, at);
     const who = rec.role === "user" ? this.userName : this.aiName;
     let c = this.chunks.at(-1);
     if (rec.role === "user" || !c || c.date !== day) {
-      const [h, mi] = rec.time.split(":").map(Number) as [number, number];
-      const [y, mo, d] = day.split("-").map(Number) as [number, number, number];
       c = { key: `${day}#${String(this.chunks.length).padStart(7, "0")}`, date: day, time: rec.time,
-            at: new Date(y, mo - 1, d, h, mi).getTime(), lines: [], ids: [], plain: "", text: "" };
+            at, lines: [], ids: [], plain: "", text: "" };
       this.chunks.push(c);
     }
     c.lines.push(`${who}：${rec.content}`);
