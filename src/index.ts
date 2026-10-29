@@ -14,7 +14,7 @@ import type { ReasoningEffortId } from "@deepseek-ai/dsh-llm";
 import { PROVIDER, SiliconAdapter } from "./adapter.js";
 import { Embedder } from "./embed.js";
 import { Lora } from "./lora.js";
-import { Memory } from "./memory.js";
+import { Memory, acceptSources } from "./memory.js";
 import { runNightly, type Ask } from "./nightly.js";
 import { Store } from "./store.js";
 import { dayOf } from "./when.js";
@@ -37,6 +37,7 @@ export interface Config {
   useLora?: boolean;
   loraServer?: string;
   loraSpeed?: string;
+  userSources?: string[];
 }
 
 export const Config: Schema<Config> = Schema.object({
@@ -56,6 +57,8 @@ export const Config: Schema<Config> = Schema.object({
     .description("开本地人格权重（要 8GB 显卡）：闲聊交给本机的硅基保留本地权重服务融合，先按 README 烘焙并启动服务；默认关，只用 DeepSeek + 记忆"),
   loraServer: Schema.string().default("http://127.0.0.1:8701").description("本地权重服务地址（python -m silicon.lora_server）"),
   loraSpeed: Schema.string().default("").description("融合速度档 fast / medium / strong：越往后越像她、越慢；留空用服务的设置"),
+  userSources: Schema.array(Schema.string()).default([])
+    .description("另外当作你本人消息的来源 kind（QQ 等桥接插件自己起的名字；user、plugin、plugin:插件名 已默认识别）"),
 });
 
 const log = (msg: string) => console.error(`[silicon] ${msg}`);
@@ -71,6 +74,7 @@ function msUntil(at: string): number {
 export function apply(ctx: Context, config: Config = {}): void {
   const dir = config.dataDir || join(homedir(), ".silicon");
   const upstream = config.upstream ?? "deepseek-official";
+  acceptSources(config.userSources ?? []);
   const store = new Store(dir, config.userName ?? "用户", config.aiName ?? "她");
   const embed = new Embedder({
     model: config.embedModel ?? "Xenova/bge-base-zh-v1.5",

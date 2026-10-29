@@ -5,7 +5,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import test from "node:test";
 import { Store } from "../lib/store.js";
-import { Memory } from "../lib/memory.js";
+import { Memory, acceptSources, isRealUser } from "../lib/memory.js";
 import { SiliconAdapter } from "../lib/adapter.js";
 
 /** 按字出现与否的假向量：有共同字的句子更相似，够测排序和过滤。 */
@@ -65,6 +65,30 @@ test("只记这一轮新发的用户消息，不补记旧消息，不重复记",
   mem.capture(msgs, now);
   const today = st.readDay("2026-07-03");
   assert.deepEqual(today.map((r) => r.content), ["今天第一句", "第二句"]);
+});
+
+test("QQ 等桥接插件转进来的消息也算用户本人的话，DSH 自己插的上下文不算", () => {
+  const [, st, mem] = fresh();
+  const from = (id, text, source) => ({ id, role: "user", content: [{ type: "text", text }], source });
+  const msgs = [
+    sys("x"), ai("b1", "嗯"),
+    from("q1", "官方 QQ 机器人", { kind: "user" }),
+    from("q2", "dsh-im-qq", { kind: "plugin", plugin: "dsh-im-qq" }),
+    from("q3", "dsh-napcat", { kind: "plugin:dsh-napcat" }),
+    from("q4", "自定义来源", { kind: "qq-relay" }),
+    from("c1", "现在 10:00", { kind: "time-context" }),
+    from("c2", "当前目录 D:/", { kind: "workspace", form: "snapshot" }),
+    from("c3", "群里冷场了，主动说一句", { kind: "speak-up" }),
+  ];
+  mem.capture(msgs, new Date(2026, 6, 3, 10, 0));
+  assert.deepEqual(st.readDay("2026-07-03").map((r) => r.content), ["官方 QQ 机器人", "dsh-im-qq", "dsh-napcat"]);
+  acceptSources(["qq-relay"]);
+  try {
+    assert.ok(isRealUser(msgs[5]), "配置 userSources 后认得自定义来源");
+    assert.ok(!isRealUser(msgs[6]) && !isRealUser(msgs[7]) && !isRealUser(msgs[8]));
+  } finally {
+    acceptSources([]);
+  }
 });
 
 test("提供方：加记忆后转交上游、记下她的回答；辅助调用原样转交", async () => {

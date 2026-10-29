@@ -24,6 +24,7 @@ export interface Config {
     useLora?: boolean;
     loraServer?: string;
     loraSpeed?: string;
+    userSources?: string[];
 }
 export declare const Config: Schema<Config>;
 export declare function apply(ctx: Context, config?: Config): void;

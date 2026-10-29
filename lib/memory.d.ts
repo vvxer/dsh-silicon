@@ -12,7 +12,13 @@ export interface MemoryOptions {
 }
 type Msg = RequestMessage;
 export declare function textOf(m: Msg): string;
-/** 用户本人发的消息（不是压缩摘要、插件注入或仅供请求的输入）。 */
+/** 配置 userSources：另外当作用户本人消息的来源 kind（桥接插件自己起的名字）。 */
+export declare function acceptSources(kinds: readonly string[]): void;
+/**
+ * 用户本人发的消息（不是压缩摘要、DSH 插进来的上下文或仅供请求的输入）。
+ * DSH 网页和命令行发的是 kind "user"；QQ 等桥接插件转进来的，有的也是 "user"，有的是 "plugin" 或 "plugin:插件名"
+ * （dsh-im-qq、dsh-napcat、dsh-onebot）。DSH 自己插的上下文（时间、快照、计划模式……）各有自己的 kind，有的还带 form。
+ */
 export declare function isRealUser(m: Msg): boolean;
 export declare class Memory {
     readonly store: Store;

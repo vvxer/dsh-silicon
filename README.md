@@ -54,8 +54,27 @@ dsh plugin --profile web add -w github:vvxer/dsh-silicon
 | `embedDtype` | `fp16` | 向量模型精度。`fp32` 约 390MB，和实验时的检索结果完全相同；`fp16` 50 条里 49 条相同；不建议用 `q8`（只有约 2/3 相同） |
 | `modelHost` | `https://hf-mirror.com/` | 向量模型下载源 |
 | `modelDir` | 空 | 已经下好的模型根目录（下面是 `Xenova/bge-base-zh-v1.5/...`），给了就不联网 |
+| `userSources` | 空 | 另外当作你本人消息的来源名字。QQ 这类桥接插件用自己起的名字转消息时填，见下面"和 QQ 插件一起用" |
 
 她的人格写在 DSH 自己的系统提示里，本插件不管人格，只管记忆。整理习惯卡时，会参照最近一次的系统提示，避免把人格里已有的东西重复写进卡。也可以在 `dataDir` 下放一份 `persona.md` 指定人格。
+
+## 和 QQ 插件一起用
+
+本插件只注册一个模型提供方，不改 DSH 的会话，也不占别的插件的位置，可以和 QQ 机器人这类桥接插件一起装。QQ 插件把消息转进 DSH 会话，只要这个会话用的是硅基保留的模型，QQ 里的聊天就会被记住。
+
+让 QQ 的会话用上硅基保留，模型写 `silicon/deepseek-flash`：
+- 插件有自己的模型设置（比如 dsh-im-qq 的 `provider` / `model`）：`provider` 填 `silicon`，`model` 填 `deepseek-flash`。
+- 插件支持按聊天切模型（比如腾讯官方 dsh-qqbot 的 `/model`）：只在你自己的私聊里发 `/model silicon/deepseek-flash`。
+- 插件用 DSH 的默认模型（比如官方 dsh-qqbot 的 Provider 留空时）：把 DSH 的默认模型改成硅基保留。
+
+**只给你自己的聊天用。** 记忆是一个人的：所有用硅基保留的会话共用一份记忆，分不出是谁在说话。群聊或别人的私聊也走硅基保留的话，别人说的话会被记成你说的，她和别人聊天时也可能提起你们私聊里的事。所以只把你自己的私聊切到硅基保留，群聊和别人的私聊继续用普通 DeepSeek。插件只有一个全局模型设置时，用它的白名单只放你自己的 QQ 号。
+
+2026 年 10 月按源码核对过这些插件转进来的消息（没有实机连 QQ 测）：
+- 腾讯官方 tencent-connect/dsh-qqbot、belowthetree/dsh-qqbot、nd002723/dsh-qq-bot、wufa-cat/dsh-qq-bot、hualiong/dsh-qq-bot、FablerTan/dsh-qq-relay、YUsaltyfish/dsh-onebot-qq、cheems135/dsh-qq-bridge：直接能认出你的消息。
+- 988hj7tczd-oss/dsh-im-qq、wzwei1990/dsh-napcat、mario841859784/dsh-onebot（HaoHaoP/qq-dsh-bot 也用它）：0.2.1 起能认出。之前的版本会漏记这些插件转来的消息，也不会给它们加记忆。
+- 别的插件如果给消息起了自己的来源名字，把名字写进 `userSources`。
+
+有的 QQ 插件自带人设或记忆功能。人设写一份就行，和 DSH 系统提示里的保持一致；自带的记忆建议关掉，免得两份记忆说法对不上。
 
 ## 可选：本地人格权重（要显卡）
 
@@ -105,6 +124,7 @@ dsh plugin --profile web add -w github:vvxer/dsh-silicon
 
 - DSH 还是预览版，插件接口可能会变。本插件在 DSH 0.2.1-rc.2 上测试过。
 - 同时开着多个"硅基保留"会话聊天，原文日志里两边的话会按时间交错在一起。
+- 记忆不区分说话的人，只适合一个人用；和 QQ 插件一起用时没有实机测过，见"和 QQ 插件一起用"。
 - 本地人格权重要另外跑 Python 版的本地权重服务，还不能只靠插件一条命令装好。
 
 ## 作者与反馈
